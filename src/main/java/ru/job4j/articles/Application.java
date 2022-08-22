@@ -9,6 +9,7 @@ import ru.job4j.articles.store.WordStore;
 
 import java.io.InputStream;
 import java.util.Properties;
+import java.util.Scanner;
 
 public class Application {
 
@@ -17,11 +18,17 @@ public class Application {
     public static final int TARGET_COUNT = 1_000_000;
 
     public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        while (Integer.parseInt(scanner.nextLine()) != 1) {
+            scanner = new Scanner(System.in);
+        }
         var properties = loadProperties();
         var wordStore = new WordStore(properties);
         var articleStore = new ArticleStore(properties);
         var articleGenerator = new RandomArticleGenerator();
         var articleService = new SimpleArticleService(articleGenerator);
+        wordStore.init();
+        articleStore.init();
         articleService.generate(wordStore, TARGET_COUNT, articleStore);
     }
 

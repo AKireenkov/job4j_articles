@@ -24,8 +24,23 @@ public class ArticleStore implements Store<Article>, AutoCloseable {
 
     public ArticleStore(Properties properties) {
         this.properties = properties;
+    }
+
+    public void init() {
         initConnection();
+        deleteAll();
         initScheme();
+    }
+
+    private void deleteAll() {
+        LOGGER.info("Удаление таблицы");
+        try (var statement = connection.createStatement()) {
+            var sql = "drop table if exists articles";
+            statement.execute(sql);
+        } catch (Exception e) {
+            LOGGER.error("Не удалось выполнить операцию: { }", e.getCause());
+            throw new IllegalStateException();
+        }
     }
 
     private void initConnection() {
@@ -60,9 +75,10 @@ public class ArticleStore implements Store<Article>, AutoCloseable {
         try (var statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             statement.setString(1, model.getText());
             statement.executeUpdate();
-            var key = statement.getGeneratedKeys();
-            while (key.next()) {
-                model.setId(key.getInt(1));
+            try (var key = statement.getGeneratedKeys()) {
+                while (key.next()) {
+                    model.setId(key.getInt(1));
+                }
             }
         } catch (Exception e) {
             LOGGER.error("Не удалось выполнить операцию: { }", e.getCause());
@@ -77,12 +93,13 @@ public class ArticleStore implements Store<Article>, AutoCloseable {
         var sql = "select * from articles";
         var articles = new ArrayList<Article>();
         try (var statement = connection.prepareStatement(sql)) {
-            var selection = statement.executeQuery();
-            while (selection.next()) {
-                articles.add(new Article(
-                        selection.getInt("id"),
-                        selection.getString("text")
-                ));
+            try (var selection = statement.executeQuery()) {
+                while (selection.next()) {
+                    articles.add(new Article(
+                            selection.getInt("id"),
+                            selection.getString("text")
+                    ));
+                }
             }
         } catch (Exception e) {
             LOGGER.error("Не удалось выполнить операцию: { }", e.getCause());
