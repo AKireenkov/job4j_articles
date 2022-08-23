@@ -2,14 +2,18 @@ package ru.job4j.articles;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import ru.job4j.articles.service.DelFilesAndDirectory;
 import ru.job4j.articles.service.SimpleArticleService;
 import ru.job4j.articles.service.generator.RandomArticleGenerator;
 import ru.job4j.articles.store.ArticleStore;
 import ru.job4j.articles.store.WordStore;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Properties;
-import java.util.Scanner;
 
 public class Application {
 
@@ -17,11 +21,8 @@ public class Application {
 
     public static final int TARGET_COUNT = 1_000_000;
 
-    public static void main(String[] args) {
-        Scanner scanner = new Scanner(System.in);
-        while (Integer.parseInt(scanner.nextLine()) != 1) {
-            scanner = new Scanner(System.in);
-        }
+    public static void main(String[] args) throws IOException {
+        delDirectory();
         var properties = loadProperties();
         var wordStore = new WordStore(properties);
         var articleStore = new ArticleStore(properties);
@@ -30,6 +31,14 @@ public class Application {
         wordStore.init();
         articleStore.init();
         articleService.generate(wordStore, TARGET_COUNT, articleStore);
+    }
+
+    private static void delDirectory() throws IOException {
+        Path path = Paths.get("./db-dir");
+        if (Files.exists(path)) {
+            DelFilesAndDirectory del = new DelFilesAndDirectory();
+            Files.walkFileTree(path, del);
+        }
     }
 
     private static Properties loadProperties() {

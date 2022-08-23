@@ -27,8 +27,6 @@ public class SimpleArticleService implements ArticleService {
             LOGGER.info("Сгенерирована статья № {}", i);
             Article str = articleGenerator.generate(words);
             articleStore.save(str);
-            str = null;
-            System.gc();
         }
     }
 }
